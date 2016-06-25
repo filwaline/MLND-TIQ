@@ -11,11 +11,11 @@ def question2(a):
 
 def question3(file):
 	G = helper.Graph(file)
-	mst = helper.PrimMST(G)
+	mst = helper.Kruskal(G)
 	edges = {str(v):[] for v in xrange(G.V)}
-	for i in xrange(1,G.V):
-		v,w = mst.edges()[i].vertexes()
-		weight = mst.edges()[i].weight()
+	for edge in mst.edges():
+		v,w = edge.vertexes()
+		weight = edge.weight()
 		edges[str(v)].append((str(w),weight))
 		edges[str(w)].append((str(v),weight))
 	return edges

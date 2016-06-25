@@ -71,41 +71,54 @@ def dp(string):
 
 ###################### question 3  ######################################
 import heapq
-class indexedMinHeap:
+class PriorityQueue:
 	def __init__(self):
 		self.hq = []
-		self.k2v = {}
-		self.v2k = {}
 
-	def push(self,key,value):
-		heapq.heappush(self.hq,value)
-		self.k2v[key] = value
-		self.v2k[value] = key
+	def push(self,item):
+		heapq.heappush(self.hq,item)
 
 	def popMin(self):
-		value = heapq.heappop(self.hq)
-		key = self.v2k.pop(value)
-		del self.k2v[key]
-		return key
-
-	def change(self,key,value):
-		lastvalue = self.k2v[key]
-		del self.v2k[lastvalue]
-		self.hq[self.hq.index(lastvalue)] = value
-		self.v2k[value] = key
-		self.k2v[key] = value
-
-	def exist(self,key):
-		try:
-			self.k2v[key]
-			return True
-		except KeyError:
-			return False
+		return heapq.heappop(self.hq)
 
 	def isEmpty(self):
 		if len(self.hq) > 0:
 			return False
 		return True
+
+class UnionFind:
+	def __init__(self,N):
+		self.ID = [i for i in xrange(N)]
+		self.wr = [1 for i in xrange(N)] # root weight
+		self.N = N
+		self.count = N
+
+	def find(self,p):
+		if self.ID[p] == p:
+			return p
+		else:
+			self.ID[p] = self.find(self.ID[p])
+			return self.ID[p]
+
+
+	def union(self,p,q):
+		pRoot = self.find(p)
+		qRoot = self.find(q)
+		if pRoot == qRoot:
+			return
+		if self.wr[pRoot] > self.wr[qRoot]:
+			self.ID[qRoot] = pRoot
+			self.wr[pRoot] += self.wr[qRoot]
+		else:
+			self.ID[pRoot] = qRoot
+			self.wr[qRoot] += self.wr[pRoot]
+		self.count -= 1
+		
+
+	def isConnect(self,p,q):
+		if self.find(p) == self.find(q):
+			return True
+		return False
 
 class Edge:
 	def __init__(self,v,w,weight):
@@ -133,51 +146,50 @@ class Edge:
 	def __str__(self):
 		return 'v:%s, w:%s, weight:%s'%(self.__v,self.__w,self.__weight)
 
+	def __lt__(self,edge):
+		return self.weight() < edge.weight()
+
+	def __le__(self,edge):
+		return self.weight() <= edge.weight()
+
+	def __eq__(self,edge):
+		return self.weight() == edge.weight()
+
+	def __gt__(self,edge):
+		return self.weight() > edge.weight()
+
+	def __ge__(self,edge):
+		return self.weight() >= edge.weight()
 
 class Graph:
 	def __init__(self,file):
 		with open(file,'rt') as f:
 			self.V = int(f.readline())
 			self.E = int(f.readline())
-			self.adj = {v:[] for v in xrange(self.V)}
+			self.edges = []
 			for e in xrange(self.E):
 				line = f.readline()
 				v,w,weight = line.split()
-				self.adj[int(v)].append(Edge(v,w,weight))
-				self.adj[int(w)].append(Edge(w,v,weight))
+				self.edges.append(Edge(v,w,weight))
 
-	def degree(self,vertex):
-		return len(self.adj[vertex])
-
-class PrimMST:
+class Kruskal:
 	def __init__(self,G):
-		self.edgeTo = [None for v in xrange(G.V)]
-		self.distTo = [float('inf') for v in xrange(G.V)]
-		self.marked = [False for v in xrange(G.V)]
+		self.mst = []
+		self.pq = PriorityQueue()
+		self.uf = UnionFind(G.V)
 
-		self.pq = indexedMinHeap()
-		self.pq.push(0,0.0)
-
-		while not self.pq.isEmpty():
-			self.visit(G,self.pq.popMin())
-
-	def visit(self,G,v):
-		self.marked[v] = True
-
-		for edge in G.adj[v]:
-			w = edge.other(v)
-			if self.marked[w]:
+		for edge in G.edges:
+			self.pq.push(edge)
+		while not self.pq.isEmpty() and len(self.mst) < G.V - 1:
+			e = self.pq.popMin()
+			v,w = e.vertexes()
+			if self.uf.isConnect(v,w):
 				continue
-			if edge.weight() < self.distTo[w]:
-				self.edgeTo[w] = edge
-				self.distTo[w] = edge.weight()
-				if self.pq.exist(w):
-					self.pq.change(w,edge.weight())
-				else:
-					self.pq.push(w,edge.weight())
+			self.uf.union(v,w)
+			self.mst.append(e)
 
 	def edges(self):
-		return self.edgeTo
+		return self.mst
 
 ######################################################################
 
